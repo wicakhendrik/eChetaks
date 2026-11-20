@@ -1,4 +1,7 @@
 <?php
+// Hanya admin yang sudah login yang boleh menjalankan aksi ini.
+session_start();
+if (!isset($_SESSION['login'])) { header('Location: login.php'); exit(); }
 
 require '../function/function.php';
 $id_bayar = $_GET["id_bayar"];

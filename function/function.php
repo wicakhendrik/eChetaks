@@ -1,16 +1,7 @@
 <?php
-	try
-	{
-	$db = new PDO('mysql:host=localhost;dbname=chetaks', "root", ""); //mengkonaksikan dengan database
-	
-  	$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-	}
-	catch (PDOException $e) 
-	{
-		// tampilkan pesan kesalahan jika koneksi gagal
-		echo "Koneksi atau query bermasalah: " . $e->getMessage() . "<br/>";
-		die();
-	}
+	// Koneksi database memakai konfigurasi yang sama dengan koneksi.php
+	// (env DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS).
+	include_once __DIR__ . '/../koneksi.php';
 	include 'validate.php';
 
 	function uploadgambar() { 
@@ -94,7 +85,7 @@
 		$gambarproduk = uploadgambar();
 
 		try{ 
-			$insert = $db->prepare("INSERT INTO produk (id_produk, nama_produk, harga, gambar_produk) values ('', :namaproduk, :hargaproduk, :gambarproduk)"); 
+			$insert = $db->prepare("INSERT INTO produk (nama_produk, harga, gambar_produk) values (:namaproduk, :hargaproduk, :gambarproduk)"); 
 			$insert->bindValue(':namaproduk', $namaproduk); 
 			$insert->bindValue(':hargaproduk', $hargaproduk);
 			$insert->bindValue(':gambarproduk', $gambarproduk);
@@ -242,7 +233,7 @@
 		$pembayaran = uploadpembayaran();
 
 		try{ 
-			$insert = $db->prepare("INSERT INTO pembayaran (id_pembayaran, id_pemesanan, nama_pemesan, jumlah_bayar, tgl_pembayaran, bukti_bayar, status_pembayaran) values ('', :id_pemesanan, :nama_pemesan, :jumlah_bayar, NOW(), :bukti_bayar, :status_pembayaran)"); 
+			$insert = $db->prepare("INSERT INTO pembayaran (id_pemesanan, nama_pemesan, jumlah_bayar, tgl_pembayaran, bukti_bayar, status_pembayaran) values (:id_pemesanan, :nama_pemesan, :jumlah_bayar, NOW(), :bukti_bayar, :status_pembayaran)"); 
 			$insert->bindValue(':id_pemesanan', $idorder);
 			$insert->bindValue(':nama_pemesan', $nama);
 			$insert->bindValue(':jumlah_bayar', $jumlah);
