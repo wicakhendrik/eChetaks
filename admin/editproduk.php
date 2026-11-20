@@ -3,12 +3,12 @@
     if (!isset($_SESSION['login']))
     {
       //user akan diarahkan ke halam login jika user belum login
-      header("Location: login.php");
+      header("Location: login.php"); exit();
     }
     include "../koneksi.php"; //mengkoneksikan dengan database
     include "../function/function.php"; //memanggil function.php 
-    $id = $_GET["id"];
-    $query = $db->prepare("SELECT * FROM produk where id_produk='$id'");
+    $id = (int) ($_GET["id"] ?? 0);
+    $query = $db->prepare("SELECT * FROM produk where id_produk = :id"); $query->bindValue(':id', $id, PDO::PARAM_INT);
     $query->execute(); 
     foreach ($query as $data){
 ?>

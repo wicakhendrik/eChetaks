@@ -5,7 +5,7 @@
     $errors1 = array();   
     $errors2 = array();   
     if( isset($_SESSION["login"]) ) {
-        header("Location: index.php");   
+        header("Location: index.php"); exit();   
     }  
     function cekPassword(){
         global $db;
@@ -23,7 +23,7 @@
             if($_SESSION['captcha'] == $captcha){
 				$_SESSION['login'] = true;
                 $_SESSION['id_admin'] = $id_admin;
-                header("Location: index.php");  
+                header("Location: index.php"); exit();  
 			}else{
 				$errors1 = true;  
 			} 

@@ -22,7 +22,7 @@ Panduan deploy aplikasi ini ke server/VPS. Ditulis untuk **manusia dan AI agent*
 | **B. Nginx + PHP-FPM + MySQL (native)** | Kalau VPS tidak boleh/tidak mau pakai Docker. | ⚠️ Ditulis dari konfigurasi standar, **belum dijalankan** di VPS sungguhan. Ikuti verifikasi di langkah akhir. |
 
 > ### ⚠️ Baca dulu sebelum membuka ke internet
-> Aplikasi ini proyek kuliah. Sebagian query SQL masih menyisipkan input langsung (**rentan SQL injection**) — lihat [Bagian 7](#7-keamanan-yang-perlu-kamu-ketahui). Sebelum dipublikasikan luas, pilih salah satu: (a) perbaiki query-nya, atau (b) batasi akses (mis. basic-auth Nginx/Caddy untuk seluruh situs, atau VPN/Tailscale). Untuk demo/portofolio pribadi, (b) paling cepat.
+> Aplikasi ini proyek kuliah. SQL injection dan bypass login sudah diperbaiki, tapi kode ini **belum pernah diaudit penuh** dan masih punya kelemahan lain (tanpa CSRF token, validasi upload hanya dari ekstensi, hash password tanpa salt) — lihat [Bagian 7](#7-keamanan-yang-perlu-kamu-ketahui). Untuk demo/portofolio, aman dibuka asal password admin sudah diganti; untuk data pelanggan sungguhan, tambahkan lapisan akses (basic-auth di reverse proxy, atau VPN/Tailscale) atau perbaiki sisa kelemahan dulu.
 
 ---
 
@@ -355,7 +355,8 @@ for p in chetaks.sql DEPLOY.md .env img/ desain/ buktibayar/; do
 
 # 5. Aksi admin tanpa login harus 302 -> login (BUKAN 200)
 for p in "admin/terimabayar.php?id_bayar=0&id_pesan=0" "admin/pesananbatal.php?id=0" "function/deleteProduct.php?id=0" admin/index.php; do
-  printf '%-48s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/$p")"; done
+  printf '%-48s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code} body=%{size_download}B' "$BASE/$p")"; done
+# harus: 302 body=0B  (body > 0 berarti isi halaman admin bocor ke pengguna yang belum login)
 ```
 
 **Checklist manual di browser (manusia):**
@@ -391,20 +392,22 @@ Jika langkah 2/3/6 gagal dengan "gagal ..." → cek [Troubleshooting](#troublesh
 
 Sudah ditangani di repo ini:
 - Aksi admin (`terimabayar`, `tolakbayar`, `pesananbatal`, `pesananselesai`, `deleteProduct`) sekarang menolak pengguna yang belum login.
+- Bypass login: halaman admin dulu hanya me-redirect tanpa `exit`, sehingga isinya tetap terkirim dan POST tanpa login tetap jalan. Sekarang berhenti setelah redirect.
+- SQL injection pada `order.php`, `invoice.php`, `admin/editproduk.php`, `function/deleteProduct.php`, `pemesanan()` → prepared statement + cast integer (menutup juga XSS dari parameter `id`).
+- Pemesanan menolak jumlah non-angka / ≤ 0 dan produk/jasa kirim yang tidak ada.
 - Docker/Nginx memblokir eksekusi PHP di folder upload dan menyembunyikan `chetaks.sql`, `*.md`, `.env`.
 - Kredensial DB tidak lagi di-hardcode untuk deploy (env variable).
 
-**Belum diperbaiki — risiko nyata di server publik:**
+**Belum diperbaiki — risiko yang tersisa di server publik:**
 
 | Risiko | Lokasi | Dampak |
 |---|---|---|
-| SQL injection (input disisipkan ke string SQL) | `order.php`, `invoice.php`, `admin/editproduk.php`, `function/deleteProduct.php`, `pemesanan()` di `function/function.php` | Penyerang bisa membaca/mengubah database (termasuk hash admin) |
 | Tidak ada CSRF token; aksi admin lewat link GET | seluruh `admin/*` | Admin yang login bisa "dipaksa" menjalankan aksi lewat link berbahaya |
 | Upload divalidasi hanya dari ekstensi; nama file asli dipakai & bisa menimpa | `uploaddesain/uploadgambar/uploadpembayaran` di `function.php` | Penimpaan file; (eksekusi PHP sudah diblok di folder upload) |
 | Hash password SHA-256 tanpa salt; captcha sederhana | `admin/login.php` | Mudah di-brute-force/crack bila hash bocor |
 | Data contoh (rekening, WhatsApp) masih placeholder | `invoice.php`, `contact.php`, `index.php` | Ganti dengan data asli sebelum dipakai |
 
-**Rekomendasi minimum bila situs dibuka publik:** ganti password admin → basic-auth di reverse proxy (atau batasi IP/VPN) → perbaiki SQL injection (ubah ke prepared statement) → baru buka tanpa basic-auth.
+**Rekomendasi minimum bila situs dibuka publik:** ganti password admin (langkah 3) → pasang HTTPS → untuk data pelanggan sungguhan, tambahkan basic-auth di reverse proxy untuk `/admin/` (atau batasi IP/VPN) → pertimbangkan perbaikan sisa kelemahan di atas.
 
 ---
 
@@ -418,4 +421,6 @@ Supaya transparan bagi siapa pun yang membandingkan dengan versi 2020:
 | `function/function.php` | `INSERT` produk & pembayaran tidak lagi mengirim `''` untuk kolom auto-increment | Gagal di MySQL 8 strict mode |
 | `chetaks.sql` | `desain_produk`, `bukti_bayar`, `gambar_produk` → `varchar(255)` | Nama file panjang membuat INSERT gagal di strict mode |
 | `admin/{terimabayar,tolakbayar,pesananbatal,pesananselesai}.php`, `function/deleteProduct.php` | Cek `$_SESSION['login']` di awal | Sebelumnya bisa dipanggil tanpa login |
+| `admin/{index,daftarproduk,daftarpesanan,daftarpembayaran,tambahproduk,editproduk,login}.php` | `exit()` setelah `header("Location: ...")` | Tanpa `exit`, isi halaman & handler POST tetap jalan untuk pengguna yang belum login |
+| `order.php`, `invoice.php`, `admin/editproduk.php`, `function/deleteProduct.php`, `function/function.php` | Prepared statement + `bindValue`; ID di-cast `(int)`; validasi jumlah/produk/jasa kirim | SQL injection & XSS refleksi parameter `id` |
 | `Dockerfile`, `docker-compose.yml`, `docker/`, `.dockerignore`, `.env.example` | Baru | Deploy Jalur A |

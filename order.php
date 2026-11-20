@@ -1,8 +1,8 @@
 <?php
     include "koneksi.php"; //mengkoneksikan dengan database
     include "function/function.php"; //memanggil function.php 
-    $id_produk = $_GET["id"];
-    $query = $db->prepare("SELECT * FROM produk where id_produk='$id_produk'");
+    $id_produk = (int) ($_GET["id"] ?? 0);
+    $query = $db->prepare("SELECT * FROM produk where id_produk = :id_produk"); $query->bindValue(':id_produk', $id_produk, PDO::PARAM_INT);
     $query->execute();
     $id = rand(11111111,99999999); 
     foreach ($query as $data){

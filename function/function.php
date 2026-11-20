@@ -174,19 +174,22 @@
 		$desain = uploaddesain();
 		$keterangan = htmlspecialchars($data["keterangan"]);
 
-		$query1 = $db->prepare("SELECT harga FROM produk where id_produk='$produk'");
+		$hargaproduk = null; $ongkir = null;
+		$query1 = $db->prepare("SELECT harga FROM produk where id_produk = :id_produk"); $query1->bindValue(':id_produk', (int) $produk, PDO::PARAM_INT);
 		$query1->execute(); 
 		foreach ($query1 as $data1){
 			$hargaproduk = $data1['harga'];
 		}
 
-		$query2 = $db->prepare("SELECT tarif_kirim FROM jasakirim where id_jasakirim='$jasakirim'");
+		$query2 = $db->prepare("SELECT tarif_kirim FROM jasakirim where id_jasakirim = :id_jasakirim"); $query2->bindValue(':id_jasakirim', (int) $jasakirim, PDO::PARAM_INT);
 		$query2->execute(); 
 		foreach ($query2 as $data2){
 			$ongkir = $data2['tarif_kirim'];
 		}
 
 		try{ 
+			// produk / jasa kirim tidak ditemukan, atau jumlah bukan bilangan bulat >= 1 -> tolak
+			if ($hargaproduk === null || $ongkir === null || !ctype_digit((string) $jumlah) || (int) $jumlah < 1) { return 0; }
 			$insert = $db->prepare("INSERT INTO pemesanan (id_pemesanan, nama_pemesan, tgl_pemesanan, no_telp, alamat, id_produk, desain_produk, jumlah, id_jasakirim, jumlah_bayar, keterangan, status_pemesanan) values (:id_pemesanan, :nama_pemesan, NOW(), :no_telp, :alamat, :id_produk, :desain_produk, :jumlah, :id_jasakirim, :jumlah_bayar, :keterangan, :status_pemesanan)"); 
 			$insert->bindValue(':id_pemesanan', $id); 
 			$insert->bindValue(':nama_pemesan', $namapemesan);
@@ -211,7 +214,7 @@
 			echo "
 			<script>
 			alert('berhasil memesan produk!');
-			document.location.href = 'invoice.php?id=".$_POST["id"]."';
+			document.location.href = 'invoice.php?id=".(int) $_POST["id"]."';
 			</script>
 			"; 
 		} else {

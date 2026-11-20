@@ -1,7 +1,7 @@
 <?php
     include "koneksi.php"; //mengkoneksikan dengan database
-    $id_pemesanan = $_GET["id"];
-    $query = $db->prepare("SELECT * FROM pemesanan p, jasakirim j, produk where p.id_pemesanan='$id_pemesanan' and p.id_produk=produk.id_produk and p.id_jasakirim = j.id_jasakirim");
+    $id_pemesanan = (int) ($_GET["id"] ?? 0);
+    $query = $db->prepare("SELECT * FROM pemesanan p, jasakirim j, produk where p.id_pemesanan = :id_pemesanan and p.id_produk=produk.id_produk and p.id_jasakirim = j.id_jasakirim"); $query->bindValue(':id_pemesanan', $id_pemesanan, PDO::PARAM_INT);
     $query->execute();
     foreach ($query as $data){
 ?>

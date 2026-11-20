@@ -248,9 +248,11 @@ Proyek ini dibuat sebagai tugas kuliah, jadi ada beberapa hal yang sebaiknya dik
 - `INSERT ... VALUES ('')` pada kolom auto-increment diperbaiki — gagal di MySQL 8 (strict mode), sehingga **tambah produk dan kirim pembayaran tidak jalan**.
 - Kolom `desain_produk`, `bukti_bayar`, `gambar_produk` dilebarkan ke `varchar(255)`; sebelumnya upload dengan nama file panjang membuat pemesanan gagal di MySQL 8.
 - Aksi admin (`pesananbatal`, `pesananselesai`, `terimabayar`, `tolakbayar`, `deleteProduct`) sebelumnya **bisa dipanggil tanpa login**; sekarang diblok kalau belum login.
+- **Bypass login diperbaiki**: semua halaman admin hanya melakukan `header("Location: login.php")` tanpa `exit`, sehingga isi halaman (data pesanan/pembayaran) tetap terkirim ke klien dan POST tanpa login tetap dieksekusi (terbukti bisa menambah produk). Sekarang berhenti (`exit`) setelah redirect.
+- **SQL injection diperbaiki** di `order.php`, `invoice.php`, `admin/editproduk.php`, `function/deleteProduct.php`, dan `pemesanan()` di `function/function.php` (prepared statement + `bindValue`, ID di-cast ke integer). Sekaligus menutup XSS yang memantulkan parameter `id` ke HTML/JS.
+- Validasi pemesanan: jumlah harus bilangan bulat ≥ 1, produk dan jasa kirim harus ada (sebelumnya jumlah negatif menghasilkan total bayar negatif).
 
 **Masih ada (belum diperbaiki)**
-- Beberapa query menyisipkan input langsung ke string SQL → **rentan SQL injection**: `order.php`, `invoice.php`, `admin/editproduk.php`, `function/deleteProduct.php`, dan fungsi `pemesanan()` di `function/function.php`. Perlu diubah ke prepared statement dengan `bindValue`.
 - Tidak ada proteksi CSRF; aksi admin memakai link `GET`.
 - Upload hanya divalidasi lewat ekstensi (jpg/png), dan nama file asli dipakai apa adanya (file dengan nama sama akan tertimpa).
 - Password admin memakai SHA-256 tanpa salt.

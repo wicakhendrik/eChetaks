@@ -3,7 +3,7 @@
     if (!isset($_SESSION['login']))
     {
       //user akan diarahkan ke halam login jika user belum login
-      header("Location: login.php");
+      header("Location: login.php"); exit();
     }
     include "../koneksi.php"; //mengkoneksikan dengan database
 ?>
