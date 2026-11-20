@@ -1,0 +1,4 @@
+# Secrets & lokal
+.env
+.DS_Store
+*.log

@@ -75,7 +75,7 @@ CREATE TABLE `pembayaran` (
   `nama_pemesan` varchar(40) COLLATE utf8_bin NOT NULL,
   `jumlah_bayar` int(11) NOT NULL,
   `tgl_pembayaran` date NOT NULL,
-  `bukti_bayar` varchar(50) COLLATE utf8_bin NOT NULL,
+  `bukti_bayar` varchar(255) COLLATE utf8_bin NOT NULL,
   `status_pembayaran` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
@@ -101,7 +101,7 @@ CREATE TABLE `pemesanan` (
   `no_telp` varchar(40) COLLATE utf8_bin NOT NULL,
   `alamat` varchar(100) COLLATE utf8_bin NOT NULL,
   `id_produk` int(11) NOT NULL,
-  `desain_produk` varchar(40) COLLATE utf8_bin NOT NULL,
+  `desain_produk` varchar(255) COLLATE utf8_bin NOT NULL,
   `jumlah` int(11) NOT NULL,
   `id_jasakirim` int(11) NOT NULL,
   `jumlah_bayar` int(11) NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE `produk` (
   `id_produk` int(11) NOT NULL,
   `nama_produk` varchar(40) COLLATE utf8_bin NOT NULL,
   `harga` int(11) NOT NULL,
-  `gambar_produk` varchar(30) COLLATE utf8_bin NOT NULL
+  `gambar_produk` varchar(255) COLLATE utf8_bin NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 --

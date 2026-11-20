@@ -1,0 +1,14 @@
+.git
+.gitignore
+.DS_Store
+.env
+chetaks.sql
+docs
+*.md
+Dockerfile
+docker-compose.yml
+# AdminLTE source/demo yang tidak dipakai aplikasi
+admin/docs
+admin/build
+admin/pages
+admin/node_modules

@@ -1,0 +1,50 @@
+name: echetaks
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-chetaks}
+      MYSQL_USER: ${DB_USER:-chetaks}
+      MYSQL_PASSWORD: ${DB_PASS:?isi DB_PASS di file .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:?isi DB_ROOT_PASS di file .env}
+      TZ: Asia/Jakarta
+    command: ["--character-set-server=utf8mb4", "--default-time-zone=+07:00"]
+    volumes:
+      - db_data:/var/lib/mysql
+      # Dijalankan otomatis HANYA saat volume db_data masih kosong (first run)
+      - ./chetaks.sql:/docker-entrypoint-initdb.d/chetaks.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  app:
+    build: .
+    image: echetaks:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME:-chetaks}
+      DB_USER: ${DB_USER:-chetaks}
+      DB_PASS: ${DB_PASS}
+    ports:
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:80"
+    volumes:
+      # Upload user disimpan di named volume agar tidak hilang saat rebuild
+      - up_product:/var/www/html/img/product
+      - up_desain:/var/www/html/desain
+      - up_bukti:/var/www/html/buktibayar
+
+volumes:
+  db_data:
+  up_product:
+  up_desain:
+  up_bukti:
